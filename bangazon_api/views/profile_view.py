@@ -55,3 +55,5 @@ class ProfileView(ViewSet):
         user.save()
 
         return Response(None, status=status.HTTP_204_NO_CONTENT)
+    
+

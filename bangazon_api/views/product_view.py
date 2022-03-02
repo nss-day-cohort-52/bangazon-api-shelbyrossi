@@ -8,7 +8,7 @@ from rest_framework.exceptions import ValidationError
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from bangazon_api.helpers import STATE_NAMES
-from bangazon_api.models import Product, Store, Category, Order, Rating, Recommendation
+from bangazon_api.models import Product, Store, Category, Order, Rating, Recommendation, Like
 from bangazon_api.serializers import (
     ProductSerializer, CreateProductSerializer, MessageSerializer,
     AddProductRatingSerializer, AddRemoveRecommendationSerializer)
@@ -167,6 +167,7 @@ class ProductView(ViewSet):
         direction = request.query_params.get('direction', None)
         name = request.query_params.get('name', None)
         location = request.query_params.get('location', None)
+        min_price = request.query_params.get('min_price', None)
 
         if number_sold is not None:
             products = products.annotate(
@@ -187,6 +188,9 @@ class ProductView(ViewSet):
         if location is not None:
         #  __contains - filtering by location
          products = products.filter(location__contains=(location)) 
+         
+        if min_price is not None:
+            products = products.filter(price__gte=min_price)
 
         serializer = ProductSerializer(products, many=True)
         return Response(serializer.data)
@@ -297,6 +301,8 @@ class ProductView(ViewSet):
         try:
             product = Product.objects.get(pk=pk)
             customer = User.objects.get(username=request.data['username'])
+         
+            
         except Product.DoesNotExist as ex:
             return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
         except User.DoesNotExist as ex:
@@ -331,6 +337,12 @@ class ProductView(ViewSet):
 
         }
     )
+    
+   
+    
+
+    
+    
     @action(methods=['post'], detail=True, url_path='rate-product')
     def rate_product(self, request, pk):
         """Rate a product"""
@@ -351,3 +363,30 @@ class ProductView(ViewSet):
             )
 
         return Response({'message': 'Rating added'}, status=status.HTTP_201_CREATED)
+    
+    @action(methods=['post'], detail=True)
+    def like(self, request, pk):
+        """Adding Favorites to a current user"""
+        
+        try:
+    
+            product = Product.objects.get(pk=pk)
+            user = request.auth.user
+            like = Like()
+            like.product_id = product.id
+            like.customer_id = user.id
+            product.save()
+            return Response({'message': 'You have liked this product!'}, status=status.HTTP_201_CREATED)
+        except Store.DoesNotExist as ex:
+            return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
+        
+    @action(methods=['delete'], detail=True)
+    def unlike(self, request, pk):
+        """delete favorite store
+        """
+        try:
+            like = Like.objects.get(store_id=pk, customer_id=request.auth.user.id)
+            like.delete()
+            return Response({'message': "You have unliked this product."}, status=status.HTTP_201_CREATED)
+        except (Store.DoesNotExist) as ex:
+            return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)

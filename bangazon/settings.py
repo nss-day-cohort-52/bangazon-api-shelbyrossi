@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'drf_yasg',
     'bangazon_api',
     'bangazon_reports',
+ 
 ]
 
 REST_FRAMEWORK = {
