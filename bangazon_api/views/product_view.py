@@ -1,5 +1,5 @@
 from django.contrib.auth.models import User
-from django.db.models import Count
+from django.db.models import Count, Q
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import status
@@ -166,11 +166,13 @@ class ProductView(ViewSet):
         order = request.query_params.get('order_by', None)
         direction = request.query_params.get('direction', None)
         name = request.query_params.get('name', None)
+        location = request.query_params.get('location', None)
 
-        if number_sold:
+        if number_sold is not None:
             products = products.annotate(
-                order_count=Count('orders')
-            ).filter(order_count__lt=number_sold)
+                # __ is accessing property when nested orders > payment type. Filter is passed in as param so use comma and not dot notation
+              order_count=Count('orders', filter=~Q(orders__payment_type=None))
+            ).filter(order_count__gte =number_sold)
 
         if order is not None:
             order_filter = f'-{order}' if direction == 'desc' else order
@@ -181,6 +183,10 @@ class ProductView(ViewSet):
 
         if name is not None:
             products = products.filter(name__icontains=name)
+            
+        if location is not None:
+        #  __contains - filtering by location
+         products = products.filter(location__contains=(location)) 
 
         serializer = ProductSerializer(products, many=True)
         return Response(serializer.data)
