@@ -1,3 +1,4 @@
+from ast import Store
 import random
 import faker_commerce
 from faker import Faker
@@ -75,3 +76,43 @@ class ProductTests(APITestCase):
         response = self.client.get('/api/products')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), Product.objects.count())
+        
+    def test_delete_product(self):
+        """
+        Ensure we can delete an existing game.
+        """
+
+        # Create a new instance of Product
+        
+        category = Category.objects.first()
+        product = Product()
+        product.name = self.faker.ecommerce_name()
+        product.price= random.randint(50, 1000)
+        product.description = self.faker.paragraph()   
+        product.quantity = random.randint(2, 20)   
+        product.location = random.choice(STATE_NAMES)    
+        product.image_path = ""    
+        product.category_id = category.id
+        product.store_id = 1
+
+
+      
+
+        # Save the Game to the testing database
+        product.save()
+
+        # Define the URL path for deleting an existing Game
+        url = f'/api/products/{product.id}'
+
+        # Initiate DELETE request and capture the response
+        response = self.client.delete(url)
+
+        # Assert that the response status code is 204 (NO CONTENT)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        # Initiate GET request and capture the response
+        response = self.client.get(url)
+
+        # Assert that the response status code is 404 (NOT FOUND)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND) 
+
