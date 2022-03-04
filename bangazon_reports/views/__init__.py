@@ -1,2 +1,3 @@
 from .products.productsbyprice import ProductPriceList
 from.stores.favorite_stores import FavoriteStores
+from .products.inexpensive_products import InexpensiveProducts
