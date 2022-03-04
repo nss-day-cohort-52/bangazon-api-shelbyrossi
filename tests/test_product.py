@@ -77,6 +77,12 @@ class ProductTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), Product.objects.count())
         
+    def test_average_rating(self):
+        
+        """Testing Average Rating key exists/correct on product"""
+
+
+        
     def test_delete_product(self):
         """
         Ensure we can delete an existing game.
